@@ -1,5 +1,14 @@
 import 'package:flutter/material.dart';
 
+// A simple model for satellite data
+class Satellite {
+  final String name;
+  final String id;
+  final String details;
+
+  Satellite({required this.name, required this.id, required this.details});
+}
+
 void main() {
   runApp(const MyApp());
 }
@@ -7,114 +16,182 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Satellite Tracker',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.blueAccent,
+          brightness: Brightness.dark,
+        ),
+        useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const SatelliteTrackerHome(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class SatelliteTrackerHome extends StatefulWidget {
+  const SatelliteTrackerHome({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<SatelliteTrackerHome> createState() => _SatelliteTrackerHomeState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _SatelliteTrackerHomeState extends State<SatelliteTrackerHome> {
+  // Dummy data for satellites. In a real app, this would come from an API.
+  final List<Satellite> _allSatellites = [
+    Satellite(name: 'Starlink-1007', id: '2020-001A', details: 'A communication satellite from SpaceX.'),
+    Satellite(name: 'Hubble Space Telescope', id: '1990-037B', details: 'An astronomical observatory in low Earth orbit.'),
+    Satellite(name: 'International Space Station (ISS)', id: '1998-067A', details: 'A modular space station in low Earth orbit.'),
+    Satellite(name: 'GPS BIIR-7 (SVN 45)', id: '2001-033A', details: 'A navigation satellite for the Global Positioning System.'),
+    Satellite(name: 'NOAA 19', id: '2009-005A', details: 'A weather satellite operated by NOAA.'),
+    Satellite(name: 'GOES 16', id: '2016-069A', details: 'A geostationary environmental satellite.'),
+    Satellite(name: 'Terra', id: '1999-068A', details: 'A multi-national NASA scientific research satellite.'),
+    Satellite(name: 'Aqua', id: '2002-022A', details: 'A NASA satellite studying the Earth\'s water cycle.'),
+  ];
 
-  void _incrementCounter() {
+  List<Satellite> _filteredSatellites = [];
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _filteredSatellites = _allSatellites;
+    _searchController.addListener(_filterSatellites);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _filterSatellites() {
+    final query = _searchController.text.toLowerCase();
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      _filteredSatellites = _allSatellites.where((satellite) {
+        return satellite.name.toLowerCase().contains(query) ||
+               satellite.id.toLowerCase().contains(query);
+      }).toList();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: const Text('Satellite Tracker'),
+        centerTitle: true,
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search for a satellite by name or ID...',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.0),
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: _filteredSatellites.length,
+              itemBuilder: (context, index) {
+                final satellite = _filteredSatellites[index];
+                return Card(
+                  margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                  child: ListTile(
+                    leading: const Icon(Icons.satellite_alt),
+                    title: Text(satellite.name),
+                    subtitle: Text('ID: ${satellite.id}'),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => SatelliteDetailPage(satellite: satellite),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class SatelliteDetailPage extends StatelessWidget {
+  final Satellite satellite;
+
+  const SatelliteDetailPage({super.key, required this.satellite});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(satellite.name),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text('$_counter', style: Theme.of(context).textTheme.headlineMedium),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Satellite Name:',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 8.0),
+            Text(
+              satellite.name,
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+            const SizedBox(height: 16.0),
+            Text(
+              'Satellite ID:',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 8.0),
+            Text(
+              satellite.id,
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+            const SizedBox(height: 16.0),
+            Text(
+              'Details:',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 8.0),
+            Text(
+              satellite.details,
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+            const Spacer(),
+            Center(
+              child: ElevatedButton(
+                onPressed: () {
+                  // In a real app, this would show the satellite on a sky map.
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Showing satellite on sky map... (Not implemented)')),
+                  );
+                },
+                child: const Text('View on Sky Map'),
+              ),
+            ),
+             const SizedBox(height: 32.0),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
